@@ -7,14 +7,14 @@ using FluentAssertions;
 using Grpc.Core;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Trinsic;
-using Trinsic.Sdk.Options.V1;
-using Trinsic.Services.Common.V1;
-using Trinsic.Services.Connect.V1;
-using Trinsic.Services.Provider.V1;
-using Trinsic.Services.TrustRegistry.V1;
-using Trinsic.Services.UniversalWallet.V1;
-using Trinsic.Services.VerifiableCredentials.Templates.V1;
+using Dentity;
+using Dentity.Sdk.Options.V1;
+using Dentity.Services.Common.V1;
+using Dentity.Services.Connect.V1;
+using Dentity.Services.Provider.V1;
+using Dentity.Services.TrustRegistry.V1;
+using Dentity.Services.UniversalWallet.V1;
+using Dentity.Services.VerifiableCredentials.Templates.V1;
 using Xunit;
 using Xunit.Abstractions;
 using JsonSerializer = System.Text.Json.JsonSerializer;
@@ -33,13 +33,13 @@ public class Tests
     // private const int DefaultPort = 5000;
     // private const bool DefaultUseTls = false;
     // #else
-    public const string DefaultEndpoint = "staging-internal.trinsic.cloud";
+    public const string DefaultEndpoint = "api-dev.dentity.cloud";
     public const int DefaultPort = 443;
 
     // #endif
 
     private readonly ITestOutputHelper _testOutputHelper;
-    private readonly TrinsicOptions _options;
+    private readonly DentityOptions _options;
 
     public Tests(ITestOutputHelper testOutputHelper) {
         _testOutputHelper = testOutputHelper;
@@ -48,44 +48,45 @@ public class Tests
         _testOutputHelper.WriteLine($"Testing endpoint: {_options.FormatUrl()}");
     }
 
-    public static TrinsicOptions GetTestServiceOptions() {
+    public static DentityOptions GetTestServiceOptions() {
         return new() {
             ServerEndpoint = Environment.GetEnvironmentVariable("TEST_SERVER_ENDPOINT") ?? DefaultEndpoint,
             ServerPort = int.TryParse(Environment.GetEnvironmentVariable("TEST_SERVER_PORT"), out var port)
                 ? port
                 : DefaultPort,
-            ServerUseTls = !bool.TryParse(Environment.GetEnvironmentVariable("TEST_SERVER_USE_TLS"), out var tls) || tls
+            // ServerUseTls = !bool.TryParse(Environment.GetEnvironmentVariable("TEST_SERVER_USE_TLS"), out var tls) || tls
+            ServerUseTls = true
         };
     }
 
     [Fact(DisplayName = "SDK Version has 3 decimal places")]
     public void TestGetVersion() {
-        Assert.Equal("1.0.0", TrinsicService.GetSdkVersion());
+        Assert.Equal("1.0.0", DentityService.GetSdkVersion());
     }
 
     [Fact(DisplayName = "Demo: wallet and credential sample")]
     public async Task TestWalletService() {
-        var trinsic = new TrinsicService(_options.Clone());
-        var (ecosystem, _) = trinsic.Provider.CreateEcosystem(new());
+        var dentity = new DentityService(_options.Clone());
+        var (ecosystem, _) = dentity.Provider.CreateEcosystem(new());
         var ecosystemId = ecosystem.Id;
 
         // SETUP ACTORS
         // Create 3 different profiles for each participant in the scenario
-        var allison = await trinsic.Wallet.CreateWalletAsync(new() { EcosystemId = ecosystemId });
-        var clinic = await trinsic.Wallet.CreateWalletAsync(new() { EcosystemId = ecosystemId });
-        var airline = await trinsic.Wallet.CreateWalletAsync(new() { EcosystemId = ecosystemId });
+        var allison = await dentity.Wallet.CreateWalletAsync(new() { EcosystemId = ecosystemId });
+        var clinic = await dentity.Wallet.CreateWalletAsync(new() { EcosystemId = ecosystemId });
+        var airline = await dentity.Wallet.CreateWalletAsync(new() { EcosystemId = ecosystemId });
 
         allison.AuthToken.Should().NotBeNullOrWhiteSpace();
         clinic.AuthToken.Should().NotBeNullOrWhiteSpace();
         airline.AuthToken.Should().NotBeNullOrWhiteSpace();
 
-        trinsic = new TrinsicService(_options.CloneWithAuthToken(clinic.AuthToken));
+        dentity = new DentityService(_options.CloneWithAuthToken(clinic.AuthToken));
 
-        var info = await trinsic.Wallet.GetMyInfoAsync();
+        var info = await dentity.Wallet.GetMyInfoAsync();
         info.Should().NotBeNull();
         info.Wallet.Should().NotBeNull();
 
-        var template = await trinsic.Template.CreateAsync(new() {
+        var template = await dentity.Template.CreateAsync(new() {
             Name = $"dotnet-tests-{Guid.NewGuid()}",
             Fields =
             {
@@ -100,7 +101,7 @@ public class Tests
         // Read the JSON credential data
 
         // issueCredentialSample() {
-        var issueResponse = await trinsic.Credential.IssueFromTemplateAsync(new() {
+        var issueResponse = await dentity.Credential.IssueFromTemplateAsync(new() {
             TemplateId = template.Data.Id,
             ValuesJson = JsonConvert.SerializeObject(new {
                 field = 123
@@ -113,7 +114,7 @@ public class Tests
         try
         {
             // sendCredential() {
-            var sendResponse = await trinsic.Credential.SendAsync(new() {
+            var sendResponse = await dentity.Credential.SendAsync(new() {
                 Email = "<EMAIL>",
                 DocumentJson = issueResponse.DocumentJson,
                 SendNotification = true,
@@ -124,15 +125,15 @@ public class Tests
         } // We expect this to fail
 
         // STORE CREDENTIAL
-        trinsic = new TrinsicService(_options.CloneWithAuthToken(allison.AuthToken));
+        dentity = new DentityService(_options.CloneWithAuthToken(allison.AuthToken));
 
-        var insertItemResponse = await trinsic.Wallet.InsertItemAsync(new() {
+        var insertItemResponse = await dentity.Wallet.InsertItemAsync(new() {
             ItemJson = issueResponse.DocumentJson
         });
         var itemId = insertItemResponse.ItemId;
 
         // getItem() {
-        var getItemResponse = await trinsic.Wallet.GetItemAsync(new GetItemRequest {
+        var getItemResponse = await dentity.Wallet.GetItemAsync(new GetItemRequest {
             ItemId = itemId
         });
         //}
@@ -140,17 +141,17 @@ public class Tests
         getItemResponse.ItemJson.Should().NotBeEmpty();
 
         // searchWalletBasic() {
-        var walletItems = await trinsic.Wallet.SearchWalletAsync(new());
+        var walletItems = await dentity.Wallet.SearchWalletAsync(new());
         // }
 
         _testOutputHelper.WriteLine($"Last wallet item:\n{walletItems.Items.Last()}");
 
         // searchWalletSQL() { 
-        _ = await trinsic.Wallet.SearchWalletAsync(new() { Query = "SELECT c.id, c.type, c.data FROM c WHERE c.type = 'VerifiableCredential'" });
+        _ = await dentity.Wallet.SearchWalletAsync(new() { Query = "SELECT c.id, c.type, c.data FROM c WHERE c.type = 'VerifiableCredential'" });
         // }
 
         // SHARE CREDENTIAL
-        var credentialProof = await trinsic.Credential.CreateProofAsync(new() {
+        var credentialProof = await dentity.Credential.CreateProofAsync(new() {
             ItemId = itemId
         });
 
@@ -158,9 +159,9 @@ public class Tests
         _testOutputHelper.WriteLine(credentialProof.ProofDocumentJson);
 
         // VERIFY CREDENTIAL
-        trinsic = new TrinsicService(_options.CloneWithAuthToken(airline.AuthToken));
+        dentity = new DentityService(_options.CloneWithAuthToken(airline.AuthToken));
 
-        var valid = await trinsic.Credential.VerifyProofAsync(new() {
+        var valid = await dentity.Credential.VerifyProofAsync(new() {
             ProofDocumentJson = credentialProof.ProofDocumentJson
         });
 
@@ -168,9 +169,9 @@ public class Tests
         Assert.True(valid.ValidationResults["SignatureVerification"].IsValid);
 
         // DELETE CREDENTIAL
-        trinsic = new TrinsicService(_options.CloneWithAuthToken(allison.AuthToken));
+        dentity = new DentityService(_options.CloneWithAuthToken(allison.AuthToken));
         // deleteItem() {
-        await trinsic.Wallet.DeleteItemAsync(new DeleteItemRequest {
+        await dentity.Wallet.DeleteItemAsync(new DeleteItemRequest {
             ItemId = itemId
         });
         //}
@@ -178,18 +179,18 @@ public class Tests
 
     [Fact(DisplayName = "Demo: Wallet deletion")]
     public async Task TestWalletDeletion() {
-        var trinsic = new TrinsicService(_options.Clone());
-        var (ecosystem, _) = await trinsic.Provider.CreateEcosystemAsync(new());
-        var createWalletResponse = await trinsic.Wallet.CreateWalletAsync(new() { EcosystemId = ecosystem.Id });
+        var dentity = new DentityService(_options.Clone());
+        var (ecosystem, _) = await dentity.Provider.CreateEcosystemAsync(new());
+        var createWalletResponse = await dentity.Wallet.CreateWalletAsync(new() { EcosystemId = ecosystem.Id });
 
         // set the auth token to the newly created wallet
-        trinsic = new TrinsicService(_options.CloneWithAuthToken(createWalletResponse.AuthToken));
+        dentity = new DentityService(_options.CloneWithAuthToken(createWalletResponse.AuthToken));
 
-        var newWalletInfo = await trinsic.Wallet.GetMyInfoAsync();
+        var newWalletInfo = await dentity.Wallet.GetMyInfoAsync();
         var walletId = newWalletInfo.Wallet.WalletId;
 
         // deleteWallet() {
-        await trinsic.Wallet.DeleteWalletAsync(new DeleteWalletRequest {
+        await dentity.Wallet.DeleteWalletAsync(new DeleteWalletRequest {
             WalletId = walletId
         });
         //}
@@ -200,25 +201,25 @@ public class Tests
         _ = $"https://example.com/{Guid.NewGuid():N}";
 
         // setup
-        var trinsic = new TrinsicService(_options.Clone());
-        var (_, authToken) = await trinsic.Provider.CreateEcosystemAsync(new());
+        var dentity = new DentityService(_options.Clone());
+        var (_, authToken) = await dentity.Provider.CreateEcosystemAsync(new());
 
         // setAuthTokenSample() {
-        trinsic = new TrinsicService(_options.CloneWithAuthToken(authToken));
+        dentity = new DentityService(_options.CloneWithAuthToken(authToken));
         // }
 
         var schemaUri = "https://schema.org/Card";
 
         // registerIssuerSample() {
         var didUri = "did:example:test";
-        _ = await trinsic.TrustRegistry.RegisterMemberAsync(new() {
+        _ = await dentity.TrustRegistry.RegisterMemberAsync(new() {
             DidUri = didUri,
             SchemaUri = schemaUri
         });
         // }
 
         // checkIssuerStatus() {
-        var issuerStatus = await trinsic.TrustRegistry.GetMemberAuthorizationStatusAsync(new() {
+        var issuerStatus = await dentity.TrustRegistry.GetMemberAuthorizationStatusAsync(new() {
             DidUri = didUri,
             SchemaUri = schemaUri
         });
@@ -228,7 +229,7 @@ public class Tests
         issuerStatus.Status.Should().Be(RegistrationStatus.Current);
 
         // getMember() {
-        var member = await trinsic.TrustRegistry.GetMemberAsync(new() {
+        var member = await dentity.TrustRegistry.GetMemberAsync(new() {
             DidUri = didUri
         });
         // }
@@ -237,7 +238,7 @@ public class Tests
         member.AuthorizedMember.Did.Should().Be(didUri);
 
         // listMembers() {
-        var members = await trinsic.TrustRegistry.ListAuthorizedMembersAsync(new() {
+        var members = await dentity.TrustRegistry.ListAuthorizedMembersAsync(new() {
             SchemaUri = schemaUri
         });
         // }
@@ -245,7 +246,7 @@ public class Tests
         members.AuthorizedMembers[0].Should().Be(member.AuthorizedMember);
 
         // unregisterIssuer() {
-        _ = await trinsic.TrustRegistry.UnregisterMemberAsync(new() {
+        _ = await dentity.TrustRegistry.UnregisterMemberAsync(new() {
             DidUri = didUri,
             SchemaUri = schemaUri
         });
@@ -255,11 +256,11 @@ public class Tests
     [Fact(DisplayName = "Demo: ecosystem creation and listing")]
     public async Task EcosystemTests() {
         // setup
-        var trinsic = new TrinsicService(_options.Clone());
+        var dentity = new DentityService(_options.Clone());
 
         // test create ecosystem
         // createEcosystem() {
-        var (ecosystem, authToken) = await trinsic.Provider.CreateEcosystemAsync(new() {
+        var (ecosystem, authToken) = await dentity.Provider.CreateEcosystemAsync(new() {
             Description = "My ecosystem",
         });
         // }
@@ -268,7 +269,7 @@ public class Tests
         ecosystem.Id.Should().NotBeNull();
         ecosystem.Id.Should().StartWith("urn:trinsic:ecosystems:");
 
-        trinsic = new TrinsicService(_options.CloneWithAuthToken(authToken));
+        dentity = new DentityService(_options.CloneWithAuthToken(authToken));
 
         // test get ecosystem info
         // ecosystemInfo() {
@@ -281,14 +282,14 @@ public class Tests
         // }
 
         // Test upgrading account DID
-        var accountInfo = await trinsic.Wallet.GetMyInfoAsync();
+        var accountInfo = await dentity.Wallet.GetMyInfoAsync();
         var walletId = accountInfo.Wallet.WalletId;
 
         // Wrap in try-catch as this ecosystem will not presently have DID upgrade permissions
         try
         {
             // upgradeDid() {
-            var upgradeResponse = await trinsic.Provider.UpgradeDIDAsync(new() {
+            var upgradeResponse = await dentity.Provider.UpgradeDIDAsync(new() {
                 WalletId = walletId,
                 Method = SupportedDidMethod.Ion,
                 IonOptions = new() {
@@ -302,71 +303,71 @@ public class Tests
         }
     }
 
-    [Fact]
-    public async Task ConnectDemo() {
-        var trinsic = new TrinsicService(_options.Clone());
-        var (ecosystem, authToken) = await trinsic.Provider.CreateEcosystemAsync(new());
-
-        trinsic = new TrinsicService(_options.CloneWithAuthToken(authToken));
-
-        try {
-            // createSession() {
-            var createResponse = await trinsic.Connect.CreateSessionAsync(new() {
-                Verifications = {
-                    new RequestedVerification() {
-                        Type = VerificationType.GovernmentId
-                    }
-                }
-            });
-
-            var session = createResponse.Session;
-            var sessionId = session.Id; // Save this in your database
-            var clientToken = session.ClientToken; // Send this to your user's device
-            // }
-
-
-            // getSession() {
-            var getResponse = await trinsic.Connect.GetSessionAsync(new() {
-                IdvSessionId = sessionId
-            });
-            // }
-
-            // cancelSession() {
-            await trinsic.Connect.CancelSessionAsync(new() {
-                IdvSessionId = sessionId
-            });
-            // }
-
-            // hasValidCredential() {
-            await trinsic.Connect.HasValidCredentialAsync(new() {
-                Identity = new() {
-                    Identity = "<phone number>",
-                    Provider = IdentityProvider.Phone
-                },
-                CredentialRequestData = new() {
-                    Type = VerificationType.GovernmentId
-                }
-            });
-            // }
-
-        } catch {
-            // We expect the above calls to fail due to lack of privileges
-        }
-    }
+    // [Fact]
+    // public async Task ConnectDemo() {
+    //     var dentity = new DentityService(_options.Clone());
+    //     var (ecosystem, authToken) = await dentity.Provider.CreateEcosystemAsync(new());
+    //
+    //     dentity = new DentityService(_options.CloneWithAuthToken(authToken));
+    //
+    //     try {
+    //         // createSession() {
+    //         var createResponse = await dentity.Connect.CreateSessionAsync(new() {
+    //             Verifications = {
+    //                 new RequestedVerification() {
+    //                     Type = VerificationType.GovernmentId
+    //                 }
+    //             }
+    //         });
+    //
+    //         var session = createResponse.Session;
+    //         var sessionId = session.Id; // Save this in your database
+    //         var clientToken = session.ClientToken; // Send this to your user's device
+    //         // }
+    //
+    //
+    //         // getSession() {
+    //         var getResponse = await dentity.Connect.GetSessionAsync(new() {
+    //             IdvSessionId = sessionId
+    //         });
+    //         // }
+    //
+    //         // cancelSession() {
+    //         await dentity.Connect.CancelSessionAsync(new() {
+    //             IdvSessionId = sessionId
+    //         });
+    //         // }
+    //
+    //         // hasValidCredential() {
+    //         await dentity.Connect.HasValidCredentialAsync(new() {
+    //             Identity = new() {
+    //                 Identity = "<phone number>",
+    //                 Provider = IdentityProvider.Phone
+    //             },
+    //             CredentialRequestData = new() {
+    //                 Type = VerificationType.GovernmentId
+    //             }
+    //         });
+    //         // }
+    //
+    //     } catch {
+    //         // We expect the above calls to fail due to lack of privileges
+    //     }
+    // }
 
     [Fact(DisplayName = "Demo: template management and credential issuance from template")]
     public async Task DemoTemplatesWithIssuance() {
-        var trinsic = new TrinsicService(_options.Clone());
-        var (ecosystem, authToken) = await trinsic.Provider.CreateEcosystemAsync(new());
+        var dentity = new DentityService(_options.Clone());
+        var (ecosystem, authToken) = await dentity.Provider.CreateEcosystemAsync(new());
 
-        trinsic = new TrinsicService(_options.CloneWithAuthToken(authToken));
+        dentity = new DentityService(_options.CloneWithAuthToken(authToken));
 
         // create example template
         // createTemplate() {
         CreateCredentialTemplateRequest createRequest = new() {
             Name = "An Example Credential",
             Title = "Example Credential",
-            Description = "A credential for Trinsic's SDK samples",
+            Description = "A credential for Dentity's SDK samples",
             AllowAdditionalFields = false,
             Fields =
             {
@@ -387,7 +388,7 @@ public class Tests
             }
         };
 
-        var template = await trinsic.Template.CreateAsync(createRequest);
+        var template = await dentity.Template.CreateAsync(createRequest);
         // }
 
         template.Should().NotBeNull();
@@ -420,7 +421,7 @@ public class Tests
             }
         };
 
-        var updatedTemplate = await trinsic.Template.UpdateAsync(updateRequest);
+        var updatedTemplate = await dentity.Template.UpdateAsync(updateRequest);
         // }
 
         updatedTemplate.UpdatedTemplate.Title.Should().Be(updateRequest.Title);
@@ -433,7 +434,7 @@ public class Tests
         });
 
         // issueFromTemplate() {
-        var credentialJson = await trinsic.Credential.IssueFromTemplateAsync(new() {
+        var credentialJson = await dentity.Credential.IssueFromTemplateAsync(new() {
             TemplateId = templateId,
             ValuesJson = values
         });
@@ -448,7 +449,7 @@ public class Tests
 
         // insertItemWallet() {
         var insertItemResponse =
-            await trinsic.Wallet.InsertItemAsync(new() { ItemJson = credentialJson.DocumentJson });
+            await dentity.Wallet.InsertItemAsync(new() { ItemJson = credentialJson.DocumentJson });
         // }
 
         var itemId = insertItemResponse.ItemId;
@@ -461,11 +462,11 @@ public class Tests
 
         // Create proof from input document
         // createProof() {
-        var proof = await trinsic.Credential.CreateProofAsync(new() {
+        var proof = await dentity.Credential.CreateProofAsync(new() {
             DocumentJson = credentialJson.DocumentJson,
             RevealDocumentJson = frame.ToString(Formatting.None)
         });
-        var selectiveProof = await trinsic.Credential.CreateProofAsync(new() {
+        var selectiveProof = await dentity.Credential.CreateProofAsync(new() {
             DocumentJson = credentialJson.DocumentJson,
             RevealTemplate = new() {
                 // The other field, not disclosed, is "age"
@@ -474,30 +475,30 @@ public class Tests
         });
         // }
         // verifyProof() {
-        var valid = await trinsic.Credential.VerifyProofAsync(new() { ProofDocumentJson = proof.ProofDocumentJson });
+        var valid = await dentity.Credential.VerifyProofAsync(new() { ProofDocumentJson = proof.ProofDocumentJson });
         // }
         valid.IsValid.Should().BeTrue();
 
         var selectiveValid =
-            await trinsic.Credential.VerifyProofAsync(
+            await dentity.Credential.VerifyProofAsync(
                 new() { ProofDocumentJson = selectiveProof.ProofDocumentJson });
         selectiveValid.IsValid.Should().BeTrue();
 
         // Create proof from item id
-        var proof2 = await trinsic.Credential.CreateProofAsync(new() {
+        var proof2 = await dentity.Credential.CreateProofAsync(new() {
             ItemId = itemId,
             RevealDocumentJson = frame.ToString(Formatting.None)
         });
 
         var valid2 =
-            await trinsic.Credential.VerifyProofAsync(new() { ProofDocumentJson = proof2.ProofDocumentJson });
+            await dentity.Credential.VerifyProofAsync(new() { ProofDocumentJson = proof2.ProofDocumentJson });
 
         valid2.IsValid.Should().BeTrue();
 
         try
         {
             // checkCredentialStatus() {
-            var checkResponse = await trinsic.Credential.CheckStatusAsync(new() { CredentialStatusId = "" });
+            var checkResponse = await dentity.Credential.CheckStatusAsync(new() { CredentialStatusId = "" });
             // }
         } catch
         {
@@ -506,20 +507,20 @@ public class Tests
         try
         {
             // updateCredentialStatus() {
-            await trinsic.Credential.UpdateStatusAsync(new() { CredentialStatusId = "", Revoked = true });
+            await dentity.Credential.UpdateStatusAsync(new() { CredentialStatusId = "", Revoked = true });
             // }
         } catch
         {
         } // We expect this to fail
 
         // getCredentialTemplate() {
-        var getTemplateResponse = await trinsic.Template.GetAsync(new() { Id = template.Data.Id });
+        var getTemplateResponse = await dentity.Template.GetAsync(new() { Id = template.Data.Id });
         // }
         // searchCredentialTemplate() {
-        var searchTemplateResponse = await trinsic.Template.SearchAsync(new() { Query = "SELECT * FROM c" });
+        var searchTemplateResponse = await dentity.Template.SearchAsync(new() { Query = "SELECT * FROM c" });
         // }
         // deleteCredentialTemplate() {
-        var deleteTemplateResponse = await trinsic.Template.DeleteAsync(new() { Id = template.Data.Id });
+        var deleteTemplateResponse = await dentity.Template.DeleteAsync(new() { Id = template.Data.Id });
         // }
     }
 
@@ -536,13 +537,13 @@ public class Tests
     [Fact(DisplayName = "Demo: Wallet Service samples")]
     public async Task DemoWalletServiceMethods() {
         // Most part of this service's samples are directly in the wallet-service.md file because it complains on creating/removing duplicate identities/wallets 
-        var trinsic = new TrinsicService(_options.Clone());
-        var (ecosystem, authToken) = await trinsic.Provider.CreateEcosystemAsync(new());
-        var createWalletResponse = await trinsic.Wallet.CreateWalletAsync(new() { EcosystemId = ecosystem.Id });
-        trinsic = new TrinsicService(_options.CloneWithAuthToken(authToken));
+        var dentity = new DentityService(_options.Clone());
+        var (ecosystem, authToken) = await dentity.Provider.CreateEcosystemAsync(new());
+        var createWalletResponse = await dentity.Wallet.CreateWalletAsync(new() { EcosystemId = ecosystem.Id });
+        dentity = new DentityService(_options.CloneWithAuthToken(authToken));
 
         // getWalletInfo() {
-        var getWalletInfoResponse = await trinsic.Wallet.GetWalletInfoAsync(
+        var getWalletInfoResponse = await dentity.Wallet.GetWalletInfoAsync(
             new GetWalletInfoRequest {
                 WalletId = createWalletResponse.Wallet.WalletId
             }

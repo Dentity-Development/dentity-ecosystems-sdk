@@ -3,10 +3,10 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Google.Protobuf;
-using Trinsic;
-using Trinsic.Sdk.Options.V1;
-using Trinsic.Services.Common.V1;
-using Trinsic.Services.FileManagement.V1;
+using Dentity;
+using Dentity.Sdk.Options.V1;
+using Dentity.Services.Common.V1;
+using Dentity.Services.FileManagement.V1;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -19,7 +19,7 @@ namespace Tests;
 public class FileManagementServiceTests
 {
     private readonly ITestOutputHelper _testOutputHelper;
-    private readonly TrinsicOptions _options;
+    private readonly DentityOptions _options;
 
     public FileManagementServiceTests(ITestOutputHelper testOutputHelper) {
         _testOutputHelper = testOutputHelper;
@@ -30,16 +30,16 @@ public class FileManagementServiceTests
 
     [Fact]
     public async Task TestFileManagementService() {
-        var trinsic = new TrinsicService(_options.Clone());
-        var createWalletResponse = await trinsic.Wallet.CreateWalletAsync(new() { EcosystemId = "default" });
-        trinsic = new TrinsicService(_options.CloneWithAuthToken(createWalletResponse.AuthToken));
+        var dentity = new DentityService(_options.Clone());
+        var createWalletResponse = await dentity.Wallet.CreateWalletAsync(new() { EcosystemId = "default" });
+        dentity = new DentityService(_options.CloneWithAuthToken(createWalletResponse.AuthToken));
 
         // uploadFile() {
         // Get raw bytes of string
         var fileBytes = Encoding.UTF8.GetBytes("Hello, world!");
         const string fileMimeType = "application/text";
 
-        var uploadResponse = trinsic.FileManagement.UploadFile(new UploadFileRequest {
+        var uploadResponse = dentity.FileManagement.UploadFile(new UploadFileRequest {
             Contents = ByteString.CopyFrom(fileBytes),
             MimeType = fileMimeType
         });
@@ -51,7 +51,7 @@ public class FileManagementServiceTests
         var fileId = uploadResponse.UploadedFile.Id;
 
         // getFile() {
-        var getFileResponse = trinsic.FileManagement.GetFile(new GetFileRequest {
+        var getFileResponse = dentity.FileManagement.GetFile(new GetFileRequest {
             Id = fileId
         });
         //}
@@ -59,7 +59,7 @@ public class FileManagementServiceTests
         getFileResponse.File.Should().Be(uploadResponse.UploadedFile);
 
         // listFiles() {
-        var listFilesResponse = trinsic.FileManagement.ListFiles(new ListFilesRequest {
+        var listFilesResponse = dentity.FileManagement.ListFiles(new ListFilesRequest {
             Query = "SELECT * FROM _ ORDER BY _.uploadDate DESC OFFSET 0 LIMIT 100"
         });
         // }
@@ -68,19 +68,19 @@ public class FileManagementServiceTests
         listFilesResponse.Files[0].Should().Be(getFileResponse.File);
 
         // getStorageStats() {
-        var getStorageStatsResponse = trinsic.FileManagement.GetStorageStats();
+        var getStorageStatsResponse = dentity.FileManagement.GetStorageStats();
         //}
 
         getStorageStatsResponse.Stats.NumFiles.Should().Be(1);
         getStorageStatsResponse.Stats.TotalSize.Should().Be(getFileResponse.File.Size);
 
         // deleteFile() {
-        trinsic.FileManagement.DeleteFile(new DeleteFileRequest {
+        dentity.FileManagement.DeleteFile(new DeleteFileRequest {
             Id = fileId
         });
         //}
 
-        getStorageStatsResponse = trinsic.FileManagement.GetStorageStats();
+        getStorageStatsResponse = dentity.FileManagement.GetStorageStats();
         getStorageStatsResponse.Stats.NumFiles.Should().Be(0);
         getStorageStatsResponse.Stats.TotalSize.Should().Be(0);
     }

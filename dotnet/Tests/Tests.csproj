@@ -29,7 +29,7 @@
         </PackageReference>
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\Trinsic\Trinsic.csproj" />
+        <ProjectReference Include="..\Dentity\Dentity.csproj" />
     </ItemGroup>
     <ItemGroup>
         <None Include="..\..\devops\testdata\vaccination-certificate-unsigned.jsonld">

@@ -1,17 +1,17 @@
-# Trinsic SDK for .NET
+# Dentity SDK for .NET
 
 ## Installation
 
 Install latest package from nuget.org
 
 ```
-dotnet add package Trinsic
+dotnet add package Dentity
 ```
 
 If using this package in Blazor WebAssembly, use
 
 ```
-dotnet add package Trinsic.Web
+dotnet add package Dentity.Web
 ```
 
 ## Usage

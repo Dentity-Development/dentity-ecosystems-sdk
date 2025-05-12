@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Trinsic;
+using Dentity;
 using Xunit;
 
 namespace Tests;
@@ -16,14 +16,14 @@ public class HostTests
         var host = Host
             .CreateDefaultBuilder()
             .ConfigureServices(services => {
-                services.AddTrinsic();
+                services.AddDentity();
             }).Build();
 
         await host.StartAsync();
 
-        var trinsic = host.Services.GetRequiredService<TrinsicService>();
-        var providerService = trinsic.Provider;
-        var accountService = trinsic.Wallet;
+        var dentity = host.Services.GetRequiredService<DentityService>();
+        var providerService = dentity.Provider;
+        var accountService = dentity.Wallet;
 
         providerService.Should().NotBeNull();
         accountService.Should().NotBeNull();
@@ -41,7 +41,7 @@ public class HostTests
         var host = Host
             .CreateDefaultBuilder()
             .ConfigureServices(services => {
-                services.AddTrinsic(options => {
+                services.AddDentity(options => {
                     options.AuthToken = "auth";
                     options.ServerEndpoint = "example.com";
                     options.ServerPort = 42;
@@ -51,9 +51,9 @@ public class HostTests
 
         await host.StartAsync();
 
-        var trinsic = host.Services.GetRequiredService<TrinsicService>();
-        var providerService = trinsic.Provider;
-        var walletService = trinsic.Wallet;
+        var dentity = host.Services.GetRequiredService<DentityService>();
+        var providerService = dentity.Provider;
+        var walletService = dentity.Wallet;
 
         providerService.Should().NotBeNull();
         walletService.Should().NotBeNull();
@@ -71,7 +71,7 @@ public class HostTests
         var host = Host
             .CreateDefaultBuilder()
             .ConfigureServices(services => {
-                services.AddTrinsic(options => {
+                services.AddDentity(options => {
 
                 });
             }).Build();

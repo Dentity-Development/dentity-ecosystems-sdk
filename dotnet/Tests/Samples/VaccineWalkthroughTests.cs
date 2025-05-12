@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Trinsic;
-using Trinsic.Sdk.Options.V1;
-using Trinsic.Services.Common.V1;
-using Trinsic.Services.VerifiableCredentials.Templates.V1;
+using Dentity;
+using Dentity.Sdk.Options.V1;
+using Dentity.Services.Common.V1;
+using Dentity.Services.VerifiableCredentials.Templates.V1;
 using Xunit;
 using Xunit.Abstractions;
 using JsonSerializer = System.Text.Json.JsonSerializer;
@@ -20,7 +20,7 @@ public class VaccineWalkthroughTests
 {
 
     private readonly ITestOutputHelper _testOutputHelper;
-    private readonly TrinsicOptions _options;
+    private readonly DentityOptions _options;
 
     public VaccineWalkthroughTests(ITestOutputHelper testOutputHelper) {
         _testOutputHelper = testOutputHelper;
@@ -37,7 +37,7 @@ public class VaccineWalkthroughTests
     [Fact(DisplayName = "Vaccine Walkthrough")]
     public async Task TestWalkthrough() {
         // createEcosystem() {
-        var trinsic = new TrinsicService(_options);
+        var trinsic = new DentityService(_options);
         var (ecosystem, _) = await trinsic.Provider.CreateEcosystemAsync(new());
         var ecosystemId = ecosystem?.Id;
         // }
@@ -56,7 +56,7 @@ public class VaccineWalkthroughTests
 
         // createTemplate() {
         // Set active profile to `clinic` so we can create a template
-        trinsic = new TrinsicService(_options.CloneWithAuthToken(clinic.AuthToken!));
+        trinsic = new DentityService(_options.CloneWithAuthToken(clinic.AuthToken!));
 
         // Prepare request to create template
         CreateCredentialTemplateRequest templateRequest = new() {
@@ -98,7 +98,7 @@ public class VaccineWalkthroughTests
 
         // storeCredential() {
         // Set active profile to 'allison' so we can manage her cloud wallet
-        trinsic = new TrinsicService(_options.CloneWithAuthToken(allison.AuthToken!));
+        trinsic = new DentityService(_options.CloneWithAuthToken(allison.AuthToken!));
 
         // Insert credential into Allison's wallet
         var insertItemResponse = await trinsic.Wallet.InsertItemAsync(new() {
@@ -123,7 +123,7 @@ public class VaccineWalkthroughTests
 
         // verifyCredential() {
         // Set active profile to `airline`
-        trinsic = new TrinsicService(_options.CloneWithAuthToken(airline.AuthToken!));
+        trinsic = new DentityService(_options.CloneWithAuthToken(airline.AuthToken!));
 
         // Verify that Allison has provided a valid proof
         var verifyResponse = await trinsic.Credential.VerifyProofAsync(new() {
