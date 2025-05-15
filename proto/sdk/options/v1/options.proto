@@ -3,16 +3,16 @@ syntax = "proto3";
 package sdk.options.v1;
 
 option go_package = "sdk/options/v1/options";
-option java_package = "trinsic.sdk.options.v1";
-option csharp_namespace = "Trinsic.Sdk.Options.V1";
+option java_package = "dentity.sdk.options.v1";
+option csharp_namespace = "Dentity.Sdk.Options.V1";
 
-// Configuration for Trinsic SDK Services
-message TrinsicOptions {
-    // Trinsic API endpoint. Defaults to `prod.trinsic.cloud`
+// Configuration for Dentity SDK Services
+message DentityOptions {
+    // Dentity API endpoint. Defaults to `prod.dentity.cloud`
     string server_endpoint = 1;
-    // Trinsic API port; defaults to `443`
+    // Dentity API port; defaults to `443`
     int32 server_port = 2;
-    // Whether TLS is enabled between SDK and Trinsic API; defaults to `true`
+    // Whether TLS is enabled between SDK and Dentity API; defaults to `true`
     bool server_use_tls = 3;
     // Authentication token for SDK calls; defaults to empty string (unauthenticated)
     string auth_token = 4;

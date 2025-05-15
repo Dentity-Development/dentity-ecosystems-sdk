@@ -2,20 +2,20 @@ syntax = "proto3";
 
 package services.filemanagement.v1;
 
-option csharp_namespace = "Trinsic.Services.FileManagement.V1";
+option csharp_namespace = "Dentity.Services.FileManagement.V1";
 option go_package = "services/filemanagement/v1/filemanagement";
-option java_package = "trinsic.services.filemanagement.v1";
+option java_package = "dentity.services.filemanagement.v1";
 option java_multiple_files = true;
 
 import "services/options/field-options.proto";
 
-// Contains information about a file stored in Trinsic's CDN
+// Contains information about a file stored in Dentity's CDN
 message File {
-  string id = 1; // ID of file, generated randomly by Trinsic on upload
+  string id = 1; // ID of file, generated randomly by Dentity on upload
   string uploader_id = 2; // Wallet ID of uploader
   uint32 size = 3; // Size, in bytes, of file
   string mime_type = 4; // Uploader-provided MIME type of file
-  string uploaded = 5; // ISO 8601 timestamp of when file was uploaded to Trinsic
+  string uploaded = 5; // ISO 8601 timestamp of when file was uploaded to Dentity
   string url = 6; // CDN URL of file
 }
 
@@ -25,7 +25,7 @@ message StorageStats {
   uint64 total_size = 2; // Sum total size of all files, in bytes
 }
 
-// Request to upload a file to Trinsic's CDN
+// Request to upload a file to Dentity's CDN
 message UploadFileRequest {
   // Raw content of file
   bytes contents = 1;
@@ -49,7 +49,7 @@ message GetFileResponse {
   File file = 1; // File specified by `id` parameter of `GetFileRequest`.
 }
 
-// Request to delete a file from Trinsic's CDN by ID
+// Request to delete a file from Dentity's CDN by ID
 message DeleteFileRequest {
   string id = 1; // ID of file to delete
 }
@@ -89,7 +89,7 @@ message GetStorageStatsResponse {
 }
 
 service FileManagement {
-  // Upload a file to Trinsic's CDN
+  // Upload a file to Dentity's CDN
   rpc UploadFile(UploadFileRequest) returns (UploadFileResponse) {
     option (options.sdk_template_option).experimental = {active: true};
   }

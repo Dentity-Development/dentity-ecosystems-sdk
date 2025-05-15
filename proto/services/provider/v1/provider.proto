@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package services.provider.v1;
 
-option csharp_namespace = "Trinsic.Services.Provider.V1";
+option csharp_namespace = "Dentity.Services.Provider.V1";
 option go_package = "services/provider/v1/provider";
-option java_package = "trinsic.services.provider.v1";
+option java_package = "dentity.services.provider.v1";
 option java_multiple_files = true;
 
 import "services/account/v1/account.proto";
@@ -69,7 +69,7 @@ message EcosystemInfoResponse {
   Ecosystem ecosystem = 1;
 }
 
-// Request to fetch the Trinsic public key used
+// Request to fetch the Dentity public key used
 // to verify authentication token validity
 message GetOberonKeyRequest {
 }

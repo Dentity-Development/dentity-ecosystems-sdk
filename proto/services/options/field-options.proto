@@ -1,9 +1,9 @@
 syntax = "proto3";
 package services.options;
 
-option csharp_namespace = "Trinsic.Services.Protobuf.Options";
+option csharp_namespace = "Dentity.Services.Protobuf.Options";
 option go_package = "services/options";
-option java_package = "trinsic.services.protobuf.options";
+option java_package = "dentity.services.protobuf.options";
 option java_multiple_files = true;
 
 import "google/protobuf/descriptor.proto";
@@ -11,9 +11,9 @@ import "google/protobuf/descriptor.proto";
 // This file is compiled into `protoc-gen-sdk`
 
 
-// Trinsic public SDK proto options start at 60,000
+// Dentity public SDK proto options start at 60,000
 extend google.protobuf.FieldOptions {
-  // Whether field is optional in Trinsic's backend.
+  // Whether field is optional in Dentity's backend.
   // This is not the same as an `optional` protobuf label;
   // it only impacts documentation generation for the field.
   bool optional = 60000;

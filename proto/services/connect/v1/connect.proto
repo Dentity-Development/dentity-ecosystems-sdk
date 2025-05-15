@@ -1,9 +1,9 @@
 syntax = "proto3";
 package services.connect.v1;
 
-option csharp_namespace = "Trinsic.Services.Connect.V1";
+option csharp_namespace = "Dentity.Services.Connect.V1";
 option go_package = "services/connect/v1/connect";
-option java_package = "trinsic.services.connect.v1";
+option java_package = "dentity.services.connect.v1";
 option java_multiple_files = true;
 
 import "services/common/v1/common.proto";

@@ -1,9 +1,9 @@
 syntax = "proto3";
 package services.trustregistry.v1;
 
-option csharp_namespace = "Trinsic.Services.TrustRegistry.V1";
+option csharp_namespace = "Dentity.Services.TrustRegistry.V1";
 option go_package = "services/trustregistry/v1/trustregistry";
-option java_package = "trinsic.services.trustregistry.v1";
+option java_package = "dentity.services.trustregistry.v1";
 option java_multiple_files = true;
 
 import "services/google/api/annotations.proto";
@@ -18,10 +18,10 @@ message RegisterMemberRequest {
     // DID URI of member to register
     string did_uri = 1;
 
-    // Trinsic Wallet ID of member to register
+    // Dentity Wallet ID of member to register
     string wallet_id = 3;
 
-    // Email address of member to register. Must be associated with an existing Trinsic account.
+    // Email address of member to register. Must be associated with an existing Dentity account.
     string email = 4;
   }
 
@@ -49,10 +49,10 @@ message UnregisterMemberRequest {
     // DID URI of member to unregister
     string did_uri = 1;
 
-    // Trinsic Wallet ID of member to unregister
+    // Dentity Wallet ID of member to unregister
     string wallet_id = 3;
 
-    // Email address of member to unregister. Must be associated with an existing Trinsic account.
+    // Email address of member to unregister. Must be associated with an existing Dentity account.
     string email = 4;
   }
 
@@ -124,10 +124,10 @@ message GetMemberRequest {
     // DID URI of member to get
     string did_uri = 1;
 
-    // Trinsic Wallet ID of member to get
+    // Dentity Wallet ID of member to get
     string wallet_id = 3;
 
-    // Email address of member to get. Must be associated with an existing Trinsic account.
+    // Email address of member to get. Must be associated with an existing Dentity account.
     string email = 4;
   }
 }

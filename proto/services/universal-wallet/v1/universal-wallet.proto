@@ -1,9 +1,9 @@
 syntax = "proto3";
 package services.universalwallet.v1;
 
-option csharp_namespace = "Trinsic.Services.UniversalWallet.V1";
+option csharp_namespace = "Dentity.Services.UniversalWallet.V1";
 option go_package = "services/universalwallet/v1/wallet";
-option java_package = "trinsic.services.universalwallet.v1";
+option java_package = "dentity.services.universalwallet.v1";
 option java_multiple_files = true;
 
 import "services/options/field-options.proto";

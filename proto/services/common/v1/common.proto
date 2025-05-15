@@ -1,9 +1,9 @@
 syntax = "proto3";
 package services.common.v1;
 
-option csharp_namespace = "Trinsic.Services.Common.V1";
+option csharp_namespace = "Dentity.Services.Common.V1";
 option go_package = "services/common/v1/common";
-option java_package = "trinsic.services.common.v1";
+option java_package = "dentity.services.common.v1";
 option java_multiple_files = true;
 
 enum ResponseStatus {
@@ -32,12 +32,12 @@ message Nonce {
   bytes request_hash = 2; // blake3256 hash of the request body
 }
 
-message TrinsicClientOptions {
-  // Trinsic API endpoint. Defaults to `prod.trinsic.cloud`
+message DentityClientOptions {
+  // Dentity API endpoint. Defaults to `prod.dentity.cloud`
   string server_endpoint = 1;
-  // Trinsic API port; defaults to `443`
+  // Dentity API port; defaults to `443`
   int32 server_port = 2;
-  // Whether TLS is enabled between SDK and Trinsic API; defaults to `true`
+  // Whether TLS is enabled between SDK and Dentity API; defaults to `true`
   bool server_use_tls = 3;
   // Authentication token for SDK calls; defaults to empty string (unauthenticated)
   string auth_token = 4;
